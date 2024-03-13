@@ -9,35 +9,30 @@ async function run() {
     var collection = client.db('Baseball-Database').collection('Baseball-Collection');
 
     // Location of the data we want to insert
-    const fileName = './data/sample.csv';
+    const fileName = './pitcher_data/aaron-nola.csv';
 
     // Temporary storage of data
     var tempData = [];
     
     // Changes CSV -> JSON and pushes it into tempData
     await csvtojson().fromFile(fileName).then(source => {
-        for (var i = 0; i < source.length; i++) {
+        for (var i = 0; i < 1; i++) {
             var oneRow = {
-                firstName: source[i]['Firstname'],
-                lastName: source[i]['Lastname'],
-                city: source[i]['City'],
-                salary: source[i]['Salary']
+                pitch_type: source[i]['pitch_type'],
+                release_speed: source[i]['release_speed'],
+                zone: source[i]['zone'],
+                release_spin_rate: source[i]['release_spin_rate']
             };
             tempData.push(oneRow);
         }
     })
 
     // Pushes data from tempData -> Collection
-    await collection.insertMany(tempData, (err, result) => {
-        if (err) console.log(err);
-        if(result){
-            console.log('Import CSV into database successfully.');
-        }
-    })
+    await collection.insertMany(tempData)
     }finally {                                              // Closes connection to DB
-
-    await client.close();
-  }
+        console.log('Imported CSV into database successfully!');
+        await client.close();
+    }
 }
 
 run()

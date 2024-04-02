@@ -1,28 +1,28 @@
 const client = require("./db.js");
 const csvtojson = require("csvtojson");
+const fs = require("fs");
+const path = require("path");
 
-async function run() {
+async function processCSVFile(filePath) {
   try {
     // Connects to the server
     await client.connect();
 
     // Collection that we are inserting into
     // Use Test collection to mess around with new data
-    var collection = client.db("Baseball-Database").collection("Aaron-Nola");
-
-    // Location of the data we want to insert
-    const fileName = "./pitcher_data/aaron-nola.csv";
+    const collection = client
+      .db("Baseball-Database")
+      .collection("Pitcher-Data");
 
     // Temporary storage of data
-    var tempData = [];
+    const tempData = [];
 
     // Changes CSV -> JSON and pushes it into tempData
     await csvtojson()
-      .fromFile(fileName)
+      .fromFile(filePath)
       .then((source) => {
-        //change 1 to source.length to get all of the data
-        for (var i = 0; i < source.length; i++) {
-          var oneRow = {
+        for (let i = 0; i < source.length; i++) {
+          const oneRow = {
             player_name: source[i]["player_name"],
             Pitcher_Throwing_arm: source[i]["p_throws"],
             game_date: source[i]["game_date"],
@@ -44,10 +44,29 @@ async function run() {
 
     // Pushes data from tempData -> Collection
     await collection.insertMany(tempData);
+    console.log(`Imported CSV ${filePath} into database successfully!`);
   } finally {
     // Closes connection to DB
-    console.log("Imported CSV into database successfully!");
     await client.close();
+  }
+}
+
+async function run() {
+  try {
+    const folderPath = "./pitcher_data"; // Path to the folder containing CSV files
+
+    // Read directory
+    const files = fs.readdirSync(folderPath);
+
+    // Process each CSV file
+    for (const file of files) {
+      const filePath = path.join(folderPath, file);
+      if (path.extname(filePath).toLowerCase() === ".csv") {
+        await processCSVFile(filePath);
+      }
+    }
+  } catch (error) {
+    console.error("Error:", error);
   }
 }
 
